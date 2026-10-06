@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo da Memória BNCC - Níveis e Dica (5º Ano)</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --primary: #059669;
+      --radius-card: 16px;
+      --radius-btn: 10px;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.16);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      user-select: none;
+    }
+    .container {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 12px;
+      width: 100%;
+    }
+    .badge-bncc {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #065f46;
+      background: #d1fae5;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+      border: 1px solid #a7f3d0;
+    }
+    h1 {
+      font-size: clamp(1.4rem, 4vw, 2.1rem);
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .subtitle {
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .mode-bar, .level-bar {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0;
+      background: #e2e8f0;
+      padding: 4px;
+      border-radius: 14px;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    .mode-btn, .level-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .mode-btn:hover, .level-btn:hover {
+      background: rgba(255, 255, 255, 0.7);
+      color: #0f172a;
+    }
+    .mode-btn.active, .level-btn.active {
+      background: #ffffff;
+      color: #047857;
+      box-shadow: var(--shadow-sm);
+    }
+    .level-btn.active {
+      color: #1d4ed8;
+    }
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      background: #ffffff;
+      padding: 12px 18px;
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid #e2e8f0;
+      gap: 12px;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .stat-group {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      display: block;
+      line-height: 1;
+    }
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .stat-value.timer-alert {
+      color: #dc2626;
+      animation: pulseAlert 0.8s infinite;
+    }
+    @keyframes pulseAlert {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .penalty-floating {
+      position: absolute;
+      top: -12px;
+      right: -24px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 999px;
+      animation: floatFade 1.2s ease-out forwards;
+      pointer-events: none;
+    }
+    @keyframes floatFade {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-16px); }
+    }
+    .timer-progress-container {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .timer-progress-bar {
+      height: 100%;
+      background: #10b981;
+      transition: width 1s linear, background-color 0.4s ease;
+    }
+    .timer-progress-bar.warning { background: #f59e0b; }
+    .timer-progress-bar.danger { background: #ef4444; }
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-btn);
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-action:hover:not(:disabled) {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .btn-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-action.hint {
+      background: #fef3c7;
+      border-color: #fcd34d;
+      color: #92400e;
+    }
+    .btn-action.hint:hover:not(:disabled) {
+      background: #fde68a;
+    }
+    .btn-action.primary {
+      background: #059669;
+      border-color: #047857;
+      color: #ffffff;
+    }
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      perspective: 1000px;
+    }
+    @media (min-width: 500px) {
+      .game-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (min-width: 768px) {
+      .game-grid { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    }
+    .card {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3.2;
+      cursor: pointer;
+      perspective: 1000px;
+    }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      border-radius: var(--radius-card);
+    }
+    .card.flipped .card-inner { transform: rotateY(180deg); }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: var(--radius-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-front {
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+    }
+    .card.math .card-front { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .card.port .card-front { background: linear-gradient(135deg, #059669, #047857); }
+    .card-back {
+      background: #ffffff;
+      color: #0f172a;
+      transform: rotateY(180deg);
+      border: 2px solid #e2e8f0;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+    .role-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .role-prompt { background: #eff6ff; color: #1d4ed8; }
+    .role-match { background: #ecfdf5; color: #047857; }
+    .content-text {
+      font-size: clamp(0.85rem, 2.2vw, 1.15rem);
+      font-weight: 800;
+      line-height: 1.25;
+      margin: auto 0;
+    }
+    .card.hint-glow .card-back {
+      border: 3px solid #f59e0b;
+      background: #fffbeb;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+      animation: hintPulse 0.5s infinite alternate;
+    }
+    @keyframes hintPulse {
+      from { transform: rotateY(180deg) scale(1); }
+      to { transform: rotateY(180deg) scale(1.03); }
+    }
+    .card.matched .card-back {
+      border-color: #10b981;
+      background: #f0fdf4;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.45);
+    }
+    .card.matched .content-text { color: #15803d; }
+    .card.shake .card-inner { animation: shakeCard 0.45s ease-in-out; }
+    .card.shake .card-back { border-color: #ef4444; background: #fef2f2; }
+    @keyframes shakeCard {
+      0%, 100% { transform: rotateY(180deg) translateX(0); }
+      20% { transform: rotateY(180deg) translateX(-6px); }
+      40% { transform: rotateY(180deg) translateX(6px); }
+      60% { transform: rotateY(180deg) translateX(-4px); }
+      80% { transform: rotateY(180deg) translateX(4px); }
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: #ffffff;
+      border-radius: 24px;
+      max-width: 460px;
+      width: 100%;
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="container">
+    <header>
+      <span class="badge-bncc">5º Ano • Ensino Fundamental</span>
+      <h1>Jogo da Memória Pedagógico</h1>
+      <p class="subtitle">Associação por correspondência conceitual (Pergunta ↔ Resposta/Significado)</p>
+      
+      <!-- SELETOR DE MODOS -->
+      <div class="mode-bar">
+        <button class="mode-btn active" onclick="setMode('matematica')">📐 Matemática (Frações & Decimais)</button>
+        <button class="mode-btn" onclick="setMode('portugues')">📚 Língua Portuguesa (Pontuação & Coesão)</button>
+        <button class="mode-btn" onclick="setMode('misto')">🌟 Desafio Misto (Total)</button>
+      </div>
+
+      <!-- SELETOR DE NÍVEIS DE DIFICULDADE -->
+      <div class="level-bar">
+        <button class="level-btn" onclick="setLevel(1)" id="lvlBtn1">🟢 Nível 1: 4 pares (75s)</button>
+        <button class="level-btn active" onclick="setLevel(2)" id="lvlBtn2">🟡 Nível 2: 6 pares (60s)</button>
+        <button class="level-btn" onclick="setLevel(3)" id="lvlBtn3">🔴 Nível 3: 8 pares (45s)</button>
+      </div>
+    </header>
+
+    <div class="dashboard">
+      <div class="stat-group">
+        <div class="stat-item">
+          <span>⏱️</span>
+          <div>
+            <span class="stat-label">Tempo Restante</span>
+            <span class="stat-value" id="timerDisplay">01:00</span>
+          </div>
+          <div id="penaltyContainer"></div>
+        </div>
+        <div class="stat-item">
+          <span>🔄</span>
+          <div>
+            <span class="stat-label">Jogadas</span>
+            <span class="stat-value" id="movesDisplay">0</span>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span>🎯</span>
+          <div>
+            <span class="stat-label">Pares</span>
+            <span class="stat-value" id="matchesDisplay">0 / 6</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <!-- BOTÃO DE DICA -->
+        <button class="btn-action hint" onclick="useHint()" id="hintBtn" title="Revela um par não encontrado por 1,5s (Penalidade: -5s no tempo)">
+          💡 Dica <span style="font-size: 0.72rem; background: rgba(0,0,0,0.08); padding: 1px 5px; border-radius: 4px; font-weight: 800;">-5s</span>
+        </button>
+        <button class="btn-action" onclick="toggleSound()">
+          <span id="soundIcon">🔊</span> Som
+        </button>
+        <button class="btn-action primary" onclick="restartGame()">
+          🔄 Reiniciar
+        </button>
+      </div>
+    </div>
+
+    <!-- BARRA VISUAL DE CONTAGEM REGRESSIVA -->
+    <div class="timer-progress-container">
+      <div class="timer-progress-bar" id="timerProgressBar" style="width: 100%;"></div>
+    </div>
+
+    <main class="game-grid" id="cardsGrid"></main>
+  </div>
+
+  <!-- MODAL DE VITÓRIA -->
+  <div class="modal-overlay" id="victoryModal">
+    <div class="modal-card">
+      <div style="font-size: 3.5rem;">🏆</div>
+      <h2 style="font-size: 1.5rem; margin-top: 6px;">Nível Concluído com Sucesso!</h2>
+      <p style="color: #64748b; font-size: 0.9rem; margin-top: 4px;" id="victorySubtitle">Parabéns pelo raciocínio rápido!</p>
+      <div style="font-size: 2rem; margin: 10px 0;" id="modalStars">⭐⭐⭐</div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; margin: 14px 0;">
+        <div>
+          <div style="font-weight: 800; font-size: 1.15rem;" id="summaryTimeLeft">00s</div>
+          <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">Sobrou</div>
+        </div>
+        <div>
+          <div style="font-weight: 800; font-size: 1.15rem;" id="summaryMoves">0</div>
+          <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">Jogadas</div>
+        </div>
+        <div>
+          <div style="font-weight: 800; font-size: 1.15rem;" id="summaryAccuracy">100%</div>
+          <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">Precisão</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button class="btn-action" onclick="closeModalAndRestart()">Repetir Nível 🔄</button>
+        <button class="btn-action primary" id="nextLevelBtn" onclick="goToNextLevel()">Próximo Nível 🚀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE TEMPO ESGOTADO -->
+  <div class="modal-overlay" id="timeoutModal">
+    <div class="modal-card">
+      <div style="font-size: 3.5rem;">⏳</div>
+      <h2 style="font-size: 1.5rem; color: #dc2626; margin-top: 6px;">O Tempo Esgotou!</h2>
+      <p style="color: #64748b; font-size: 0.9rem; margin: 8px 0;" id="timeoutMsg">
+        Não desanime! Com treino e concentração você consegue vencer este nível.
+      </p>
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+        <span style="font-size: 0.85rem; font-weight: 700; color: #991b1b;" id="timeoutPairsFound">
+          Você encontrou X pares.
+        </span>
+      </div>
+      <button class="btn-action primary" style="width: 100%; padding: 12px;" onclick="closeTimeoutAndRestart()">
+        Tentar Novamente 🔄
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* BANCO DE CONTEÚDOS BNCC */
+    const BANCO_MATEMATICA = [
+      { id: 'm1', prompt: '1/2', promptLbl: 'Fração', match: '0,5', matchLbl: 'Decimal', bncc: 'EF05MA07' },
+      { id: 'm2', prompt: '1/4', promptLbl: 'Fração', match: '0,25', matchLbl: 'Decimal', bncc: 'EF05MA07' },
+      { id: 'm3', prompt: '3/4', promptLbl: 'Fração', match: '0,75', matchLbl: 'Decimal', bncc: 'EF05MA07' },
+      { id: 'm4', prompt: '1/10', promptLbl: 'Fração', match: '0,1', matchLbl: 'Decimal', bncc: 'EF05MA07' },
+      { id: 'm5', prompt: '1/4 de 20', promptLbl: 'Cálculo', match: '5', matchLbl: 'Resultado', bncc: 'EF05MA08' },
+      { id: 'm6', prompt: '0,3 + 0,7', promptLbl: 'Operação', match: '1,0', matchLbl: 'Resultado', bncc: 'EF05MA07' },
+      { id: 'm7', prompt: '1/5', promptLbl: 'Fração', match: '0,2', matchLbl: 'Decimal', bncc: 'EF05MA07' },
+      { id: 'm8', prompt: '50% de 80', promptLbl: 'Porcentagem', match: '40', matchLbl: 'Valor', bncc: 'EF05MA08' },
+      { id: 'm9', prompt: '2/10', promptLbl: 'Fração', match: '0,2', matchLbl: 'Decimal', bncc: 'EF05MA07' },
+      { id: 'm10', prompt: '1/2 de 50', promptLbl: 'Cálculo', match: '25', matchLbl: 'Resultado', bncc: 'EF05MA08' }
+    ];
+
+    const BANCO_PORTUGUES = [
+      { id: 'p1', prompt: 'Ponto de Exclamação (!)', promptLbl: 'Pontuação', match: 'Indica surpresa, admiração ou emoção', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p2', prompt: 'Ponto de Interrogação (?)', promptLbl: 'Pontuação', match: 'Indica uma pergunta direta', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p3', prompt: 'Dois-pontos (:)', promptLbl: 'Pontuação', match: 'Anuncia a fala de alguém ou uma lista', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p4', prompt: 'Travessão (—)', promptLbl: 'Pontuação', match: 'Marca o início da fala do personagem', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p5', prompt: 'Vírgula (,)', promptLbl: 'Pontuação', match: 'Separa itens de uma lista ou enumeração', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p6', prompt: 'Conectivo "PORÉM"', promptLbl: 'Coesão', match: 'Ideia de oposição ou contraste', matchLbl: 'Sentido', bncc: 'EF05LP07' },
+      { id: 'p7', prompt: 'Reticências (...)', promptLbl: 'Pontuação', match: 'Indica interrupção ou suspensão de ideia', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p8', prompt: 'Conectivo "PORTANTO"', promptLbl: 'Coesão', match: 'Ideia de conclusão ou consequência', matchLbl: 'Sentido', bncc: 'EF05LP07' },
+      { id: 'p9', prompt: 'Ponto Final (.)', promptLbl: 'Pontuação', match: 'Encerra frase declarativa', matchLbl: 'Função', bncc: 'EF05LP04' },
+      { id: 'p10', prompt: 'Conectivo "PORQUE"', promptLbl: 'Coesão', match: 'Ideia de explicação ou causa', matchLbl: 'Sentido', bncc: 'EF05LP07' }
+    ];
+
+    /* CONFIGURAÇÃO DOS NÍVEIS */
+    const NIVEIS = {
+      1: { pairs: 4, timeLimit: 75 },
+      2: { pairs: 6, timeLimit: 60 },
+      3: { pairs: 8, timeLimit: 45 }
+    };
+
+    let currentMode = 'matematica';
+    let currentLevel = 2;
+    let cards = [];
+    let flippedIndices = [];
+    let matchedPairIds = new Set();
+    let moves = 0;
+    let timeLeft = 60;
+    let totalTime = 60;
+    let timerInterval = null;
+    let isBoardLocked = false;
+    let soundEnabled = true;
+
+    /* ÁUDIO NATIVO */
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) audioCtx = new AudioClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freqs, type, duration, vol = 0.1) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        freqs.forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const start = now + idx * 0.08;
+          osc.type = type;
+          osc.frequency.setValueAtTime(f, start);
+          gain.gain.setValueAtTime(vol, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + duration);
+        });
+      } catch(e) {}
+    }
+
+    function soundFlip() { playTone([320, 560], 'sine', 0.07, 0.08); }
+    function soundHint() { playTone([784, 988, 1175, 1568], 'sine', 0.22, 0.09); }
+    function soundMatch() { playTone([523, 659, 784, 1046], 'triangle', 0.28, 0.12); }
+    function soundError() { playTone([240, 196], 'sawtooth', 0.16, 0.07); }
+    function soundTick() { playTone([880], 'sine', 0.04, 0.05); }
+    function soundTimeout() { playTone([330, 293, 261], 'sawtooth', 0.35, 0.08); }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').innerText = soundEnabled ? '🔊' : '🔇';
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      const activeIdx = mode === 'matematica' ? 0 : (mode === 'portugues' ? 1 : 2);
+      document.querySelectorAll('.mode-btn')[activeIdx].classList.add('active');
+      restartGame();
+    }
+
+    function setLevel(lvl) {
+      currentLevel = lvl;
+      document.querySelectorAll('.level-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('lvlBtn' + lvl).classList.add('active');
+      restartGame();
+    }
+
+    function formatTime(s) {
+      const min = String(Math.floor(s / 60)).padStart(2, '0');
+      const sec = String(s % 60).padStart(2, '0');
+      return min + ':' + sec;
+    }
+
+    function updateTimerUI() {
+      const timerDisplay = document.getElementById('timerDisplay');
+      timerDisplay.innerText = formatTime(timeLeft);
+
+      const bar = document.getElementById('timerProgressBar');
+      const pct = Math.max(0, (timeLeft / totalTime) * 100);
+      bar.style.width = pct + '%';
+
+      if (timeLeft <= 10) {
+        timerDisplay.classList.add('timer-alert');
+        bar.className = 'timer-progress-bar danger';
+      } else if (timeLeft <= totalTime * 0.4) {
+        timerDisplay.classList.remove('timer-alert');
+        bar.className = 'timer-progress-bar warning';
+      } else {
+        timerDisplay.classList.remove('timer-alert');
+        bar.className = 'timer-progress-bar';
+      }
+    }
+
+    function showPenaltyAnimation() {
+      const container = document.getElementById('penaltyContainer');
+      const badge = document.createElement('div');
+      badge.className = 'penalty-floating';
+      badge.innerText = '-5s ⏳';
+      container.appendChild(badge);
+      setTimeout(() => badge.remove(), 1200);
+    }
+
+    /* SISTEMA DE DICA (HINT) */
+    function useHint() {
+      if (isBoardLocked) return;
+      const totalPairs = cards.length / 2;
+      if (matchedPairIds.size === totalPairs) return;
+
+      const remainingPairIds = [];
+      cards.forEach(c => {
+        if (!matchedPairIds.has(c.pairId) && !remainingPairIds.includes(c.pairId)) {
+          remainingPairIds.push(c.pairId);
+        }
+      });
+      if (!remainingPairIds.length) return;
+
+      const targetPairId = remainingPairIds[Math.floor(Math.random() * remainingPairIds.length)];
+      const targetIndices = [];
+      cards.forEach((c, idx) => {
+        if (c.pairId === targetPairId) targetIndices.push(idx);
+      });
+
+      startCountdown();
+      soundHint();
+
+      // Aplica penalidade: -5 segundos no tempo
+      timeLeft = Math.max(1, timeLeft - 5);
+      updateTimerUI();
+      showPenaltyAnimation();
+
+      // Revela as duas cartas por 1,5 segundos (1500ms)
+      isBoardLocked = true;
+      targetIndices.forEach(idx => {
+        const el = document.getElementById('card-' + idx);
+        el.classList.add('flipped', 'hint-glow');
+      });
+
+      setTimeout(() => {
+        targetIndices.forEach(idx => {
+          const el = document.getElementById('card-' + idx);
+          el.classList.remove('hint-glow');
+          if (!flippedIndices.includes(idx)) {
+            el.classList.remove('flipped');
+          }
+        });
+        isBoardLocked = false;
+      }, 1500);
+    }
+
+    function restartGame() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      const cfg = NIVEIS[currentLevel];
+      totalTime = cfg.timeLimit;
+      timeLeft = totalTime;
+      moves = 0;
+      flippedIndices = [];
+      matchedPairIds.clear();
+      isBoardLocked = false;
+      document.getElementById('victoryModal').classList.remove('active');
+      document.getElementById('timeoutModal').classList.remove('active');
+      stopConfetti();
+
+      document.getElementById('movesDisplay').innerText = '0';
+      updateTimerUI();
+
+      let pool = currentMode === 'matematica' ? BANCO_MATEMATICA : (currentMode === 'portugues' ? BANCO_PORTUGUES : [...BANCO_MATEMATICA, ...BANCO_PORTUGUES]);
+      let selectedPairs = [...pool].sort(() => Math.random() - 0.5).slice(0, cfg.pairs);
+      document.getElementById('matchesDisplay').innerText = '0 / ' + selectedPairs.length;
+
+      cards = [];
+      selectedPairs.forEach((pair, idx) => {
+        cards.push({
+          uid: 'c_' + idx + '_p',
+          pairId: pair.id,
+          type: 'prompt',
+          roleLabel: pair.promptLbl,
+          text: pair.prompt,
+          bncc: pair.bncc,
+          subject: pair.id.startsWith('m') ? 'math' : 'port'
+        });
+        cards.push({
+          uid: 'c_' + idx + '_m',
+          pairId: pair.id,
+          type: 'match',
+          roleLabel: pair.matchLbl,
+          text: pair.match,
+          bncc: pair.bncc,
+          subject: pair.id.startsWith('m') ? 'math' : 'port'
+        });
+      });
+
+      for (let i = cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cards[i], cards[j]] = [cards[j], cards[i]];
+      }
+
+      renderGrid();
+    }
+
+    function startCountdown() {
+      if (!timerInterval) {
+        timerInterval = setInterval(() => {
+          if (timeLeft > 0) {
+            timeLeft--;
+            updateTimerUI();
+            if (timeLeft <= 5 && timeLeft > 0) soundTick();
+            if (timeLeft === 0) handleTimeout();
+          }
+        }, 1000);
+      }
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('cardsGrid');
+      grid.innerHTML = '';
+      cards.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card ' + card.subject;
+        cardEl.id = 'card-' + index;
+        cardEl.onclick = () => onCardClick(index);
+
+        cardEl.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">
+              <span style="font-size: 2rem;">\${card.subject === 'math' ? '📐' : '📖'}</span>
+              <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase;">\${card.subject === 'math' ? 'Matemática' : 'Português'}</span>
+            </div>
+            <div class="card-back">
+              <span class="role-badge \${card.type === 'prompt' ? 'role-prompt' : 'role-match'}">
+                \${card.roleLabel}
+              </span>
+              <div class="content-text">\${card.text}</div>
+              <span style="font-size: 0.65rem; color: #94a3b8; font-weight: 700;">\${card.bncc}</span>
+            </div>
+          </div>
+        `;
+        grid.appendChild(cardEl);
+      });
+    }
+
+    function onCardClick(index) {
+      if (isBoardLocked) return;
+      if (flippedIndices.includes(index)) return;
+      if (matchedPairIds.has(cards[index].pairId)) return;
+
+      startCountdown();
+      soundFlip();
+
+      flippedIndices.push(index);
+      const cardEl = document.getElementById('card-' + index);
+      cardEl.classList.add('flipped');
+
+      if (flippedIndices.length === 2) {
+        moves++;
+        document.getElementById('movesDisplay').innerText = moves;
+        checkPairMatch();
+      }
+    }
+
+    function checkPairMatch() {
+      isBoardLocked = true;
+      const [idx1, idx2] = flippedIndices;
+      const c1 = cards[idx1];
+      const c2 = cards[idx2];
+      const isMatch = (c1.pairId === c2.pairId && c1.type !== c2.type);
+
+      if (isMatch) {
+        matchedPairIds.add(c1.pairId);
+        setTimeout(() => {
+          soundMatch();
+          document.getElementById('card-' + idx1).classList.add('matched');
+          document.getElementById('card-' + idx2).classList.add('matched');
+          flippedIndices = [];
+          isBoardLocked = false;
+          const totalPairs = cards.length / 2;
+          document.getElementById('matchesDisplay').innerText = matchedPairIds.size + ' / ' + totalPairs;
+          if (matchedPairIds.size === totalPairs) handleVictory();
+        }, 300);
+      } else {
+        setTimeout(() => {
+          soundError();
+          const el1 = document.getElementById('card-' + idx1);
+          const el2 = document.getElementById('card-' + idx2);
+          el1.classList.add('shake');
+          el2.classList.add('shake');
+          setTimeout(() => {
+            el1.classList.remove('flipped', 'shake');
+            el2.classList.remove('flipped', 'shake');
+            flippedIndices = [];
+            isBoardLocked = false;
+          }, 900);
+        }, 200);
+      }
+    }
+
+    function handleVictory() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      startConfetti();
+      const totalPairs = cards.length / 2;
+      const accuracy = Math.round((totalPairs / Math.max(moves, totalPairs)) * 100);
+
+      document.getElementById('summaryTimeLeft').innerText = timeLeft + 's';
+      document.getElementById('summaryMoves').innerText = moves;
+      document.getElementById('summaryAccuracy').innerText = accuracy + '%';
+
+      let stars = '⭐';
+      if (accuracy >= 75 && timeLeft >= totalTime * 0.3) stars = '⭐⭐⭐';
+      else if (accuracy >= 50) stars = '⭐⭐';
+      document.getElementById('modalStars').innerText = stars;
+
+      const nextBtn = document.getElementById('nextLevelBtn');
+      if (currentLevel < 3) {
+        nextBtn.style.display = 'inline-flex';
+        nextBtn.innerText = 'Próximo Nível (Nível ' + (currentLevel + 1) + ') 🚀';
+      } else {
+        nextBtn.style.display = 'none';
+      }
+
+      setTimeout(() => {
+        document.getElementById('victoryModal').classList.add('active');
+      }, 400);
+    }
+
+    function handleTimeout() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      isBoardLocked = true;
+      soundTimeout();
+      const totalPairs = cards.length / 2;
+      document.getElementById('timeoutPairsFound').innerText = 'Você encontrou ' + matchedPairIds.size + ' de ' + totalPairs + ' pares antes do tempo esgotar.';
+      document.getElementById('timeoutModal').classList.add('active');
+    }
+
+    function closeModalAndRestart() {
+      document.getElementById('victoryModal').classList.remove('active');
+      restartGame();
+    }
+
+    function closeTimeoutAndRestart() {
+      document.getElementById('timeoutModal').classList.remove('active');
+      restartGame();
+    }
+
+    function goToNextLevel() {
+      if (currentLevel < 3) {
+        setLevel(currentLevel + 1);
+      }
+    }
+
+    /* CONFETES NATIVOS */
+    let confettiActive = false;
+    let confettiParticles = [];
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function startConfetti() {
+      confettiActive = true;
+      confettiParticles = [];
+      const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'];
+      for (let i = 0; i < 90; i++) {
+        confettiParticles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * -canvas.height,
+          size: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: Math.random() * 4 - 2,
+          vy: Math.random() * 4 + 2.5,
+          rot: Math.random() * 360,
+          rotSpeed: Math.random() * 8 - 4
+        });
+      }
+      requestAnimationFrame(renderConfetti);
+    }
+
+    function stopConfetti() {
+      confettiActive = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function renderConfetti() {
+      if (!confettiActive) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      confettiParticles.forEach(p => {
+        p.y += p.vy;
+        p.x += p.vx;
+        p.rot += p.rotSpeed;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+        if (p.y > canvas.height) { p.y = -20; p.x = Math.random() * canvas.width; }
+      });
+      requestAnimationFrame(renderConfetti);
+    }
+
+    restartGame();
+  </script>
+</body>
+</html>
