@@ -8,27 +8,27 @@ import { BnccPair, DifficultyLevel, GrammarQuestion, MathChallenge, Mission, Bad
 export const DIFFICULTY_LEVELS: DifficultyLevel[] = [
   {
     level: 1,
-    name: 'Nível 1',
+    name: 'Fácil',
     pairs: 4,
     timeLimit: 75,
     badge: '🟢 Fácil',
-    description: '4 pares • 8 cartas • 75 segundos'
+    description: '4 pares • 8 cartas • 75s'
   },
   {
     level: 2,
-    name: 'Nível 2',
+    name: 'Médio',
     pairs: 6,
     timeLimit: 60,
     badge: '🟡 Médio',
-    description: '6 pares • 12 cartas • 60 segundos'
+    description: '6 pares • 12 cartas • 60s'
   },
   {
     level: 3,
-    name: 'Nível 3',
+    name: 'Difícil',
     pairs: 8,
     timeLimit: 45,
-    badge: '🔴 Craque',
-    description: '8 pares • 16 cartas • 45 segundos'
+    badge: '🔴 Difícil',
+    description: '8 pares • 16 cartas • 45s'
   }
 ];
 

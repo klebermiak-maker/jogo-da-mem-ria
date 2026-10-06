@@ -295,7 +295,7 @@ export default function Leaderboard({
           }`}
         >
           <Timer className="w-3.5 h-3.5" />
-          <span>Memória N1 (4p)</span>
+          <span>Fácil (4p)</span>
         </button>
 
         <button
@@ -307,7 +307,7 @@ export default function Leaderboard({
           }`}
         >
           <Timer className="w-3.5 h-3.5" />
-          <span>Memória N2 (6p)</span>
+          <span>Médio (6p)</span>
         </button>
 
         <button
@@ -319,7 +319,7 @@ export default function Leaderboard({
           }`}
         >
           <Timer className="w-3.5 h-3.5" />
-          <span>Memória N3 (8p)</span>
+          <span>Difícil (8p)</span>
         </button>
 
         <button

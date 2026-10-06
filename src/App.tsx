@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trophy, Volume2, VolumeX, BookOpen, Download, 
   Copy, Check, GraduationCap, Calculator, 
-  BookMarked, Target, Search, Zap, Medal
+  BookMarked, Target, Search, Zap, Medal, ArrowRight, Sparkles
 } from 'lucide-react';
 import MemoryGame from './components/MemoryGame';
 import GrammarDetectiveGame from './components/GrammarDetectiveGame';
@@ -16,6 +16,7 @@ import MissionsPanel from './components/MissionsPanel';
 import Leaderboard from './components/Leaderboard';
 import { INITIAL_MISSIONS, BADGES, PARES_MATEMATICA, PARES_PORTUGUES, DEFAULT_LEADERBOARD } from './data/bnccData';
 import { soundManager } from './utils/soundSystem';
+import { globalConfetti } from './utils/confettiCannon';
 import { Mission, Badge, LeaderboardEntry } from './types';
 
 export type ActiveTab = 'memory' | 'grammar' | 'math' | 'missions' | 'leaderboard';
@@ -96,12 +97,39 @@ export default function App() {
     return [userEntry, ...DEFAULT_LEADERBOARD];
   });
   
+  // Canvas de confetes comemorativos
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Modal comemorativo de missão concluída com impacto visual
+  const [missionCelebration, setMissionCelebration] = useState<{
+    title: string;
+    description: string;
+    badgeIcon: string;
+    xpReward: number;
+    bnccCode: string;
+  } | null>(null);
+
   // Modais
   const [showPedagogicalGuide, setShowPedagogicalGuide] = useState<boolean>(false);
   const [showHtmlExportModal, setShowHtmlExportModal] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
 
   const studentLevel = Math.floor(studentXp / 250) + 1;
+
+  // Inicializar e sincronizar Canvas de Confetes
+  useEffect(() => {
+    if (canvasRef.current) {
+      globalConfetti.attach(canvasRef.current);
+    }
+    const handleResize = () => {
+      globalConfetti.resize();
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      globalConfetti.stop();
+    };
+  }, []);
 
   useEffect(() => {
     soundManager.enabled = soundEnabled;
@@ -168,28 +196,61 @@ export default function App() {
     } catch {}
   };
 
-  // Atualizador de missões
+  // Atualizador de missões com disparo de confetes via Canvas nativo
   const triggerMissionProgress = (missionId: string, amount: number = 1) => {
     setMissions(prevMissions => {
-      return prevMissions.map(m => {
+      let justCompletedMission: Mission | null = null;
+
+      const updated = prevMissions.map(m => {
         if (m.id === missionId && !m.completed) {
           const newCount = m.currentCount + amount;
           const isDone = newCount >= m.targetCount;
           if (isDone) {
-            setStudentXp(xp => {
-              const newXp = xp + m.xpReward;
-              soundManager.playLevelUp();
-              return newXp;
-            });
+            justCompletedMission = {
+              ...m,
+              currentCount: newCount,
+              completed: true,
+            };
           }
           return {
             ...m,
             currentCount: newCount,
-            completed: isDone
+            completed: isDone,
           };
         }
         return m;
       });
+
+      // Se uma missão pendente foi completada agora:
+      if (justCompletedMission) {
+        const completedM = justCompletedMission as Mission;
+        
+        // 1. Dispara a função de confetes via Canvas nativo em tela cheia comemorando
+        globalConfetti.fire(4200);
+
+        // 2. Toca fanfarra / áudio festivo via Web Audio API
+        soundManager.playVictory();
+
+        // 3. Incrementa XP do estudante
+        setStudentXp(xp => xp + completedM.xpReward);
+
+        // 4. Exibe modal de comemoração de alto impacto visual
+        setMissionCelebration({
+          title: completedM.title,
+          description: completedM.description,
+          badgeIcon: completedM.badgeIcon,
+          xpReward: completedM.xpReward,
+          bnccCode: completedM.bnccCode,
+        });
+
+        // 5. Se todas as missões foram cumpridas, desbloqueia insígnia de Mestre
+        const allFinished = updated.every(item => item.completed);
+        if (allFinished) {
+          unlockBadge('b4');
+        }
+      }
+
+      return updated;
     });
   };
 
@@ -467,6 +528,10 @@ export default function App() {
             studentXp={studentXp}
             studentLevel={studentLevel}
             onNavigateToGame={(game) => setActiveTab(game)}
+            onTriggerConfetti={() => {
+              globalConfetti.fire(3500);
+              soundManager.playVictory();
+            }}
           />
         )}
 
@@ -626,6 +691,75 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* MODAL COMEMORATIVO DE CONCLUSÃO DE MISSÃO COM CONFETES */}
+      {missionCelebration && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-2 border-amber-300 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-36 h-36 bg-amber-200/40 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-emerald-200/40 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 to-yellow-300 text-white flex items-center justify-center mb-3 shadow-lg ring-4 ring-amber-100 text-3xl animate-bounce">
+              {missionCelebration.badgeIcon}
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-[11px] mb-2 uppercase tracking-wide">
+              <span>🎉</span> Missão Concluída! <span>⭐</span>
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-1">
+              {missionCelebration.title}
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-600 mb-4 px-2">
+              {missionCelebration.description}
+            </p>
+
+            <div className="bg-gradient-to-r from-amber-50 to-emerald-50 border border-amber-200 rounded-2xl p-3.5 mb-5 flex items-center justify-around">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Recompensa</span>
+                <div className="text-lg font-black text-amber-600 flex items-center justify-center gap-1">
+                  <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
+                  +{missionCelebration.xpReward} XP
+                </div>
+              </div>
+              <div className="h-8 w-px bg-amber-200" />
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Habilidade BNCC</span>
+                <div className="text-xs font-black text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200 mt-0.5">
+                  {missionCelebration.bnccCode}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  globalConfetti.fire(3500);
+                  soundManager.playVictory();
+                }}
+                className="py-3 px-3 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                title="Disparar mais confetes"
+              >
+                <span>🎊</span> Mais Confetes
+              </button>
+              <button
+                onClick={() => setMissionCelebration(null)}
+                className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Incrível! Continuar</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CANVAS NATIVO EM TELA CHEIA PARA CHUVA DE CONFETES */}
+      <canvas 
+        ref={canvasRef} 
+        className="fixed inset-0 pointer-events-none z-[100] w-full h-full"
+      />
 
       {/* Rodapé */}
       <footer className="w-full bg-white border-t border-slate-200 mt-auto py-4 px-4 text-center text-xs text-slate-500">

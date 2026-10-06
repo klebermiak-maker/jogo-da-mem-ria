@@ -16,6 +16,7 @@ interface MissionsPanelProps {
   studentXp: number;
   studentLevel: number;
   onNavigateToGame: (gameTab: 'memory' | 'grammar' | 'math') => void;
+  onTriggerConfetti?: () => void;
 }
 
 export default function MissionsPanel({ 
@@ -23,7 +24,8 @@ export default function MissionsPanel({
   badges, 
   studentXp, 
   studentLevel, 
-  onNavigateToGame 
+  onNavigateToGame,
+  onTriggerConfetti
 }: MissionsPanelProps) {
   const xpForNextLevel = studentLevel * 250;
   const xpCurrentProgress = studentXp % 250;
@@ -88,9 +90,21 @@ export default function MissionsPanel({
               Missões Ativas da Rodada
             </h3>
           </div>
-          <span className="text-xs font-bold text-slate-400">
-            {completedCount}/{missions.length} Concluídas
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-400">
+              {completedCount}/{missions.length} Concluídas
+            </span>
+            {completedCount > 0 && onTriggerConfetti && (
+              <button
+                onClick={onTriggerConfetti}
+                className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                title="Disparar chuva de confetes comemorativa"
+              >
+                <span>🎉</span>
+                <span className="hidden sm:inline">Comemorar</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -150,9 +164,20 @@ export default function MissionsPanel({
                   </span>
 
                   {isDone ? (
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg flex items-center gap-1">
-                      <CheckCircle2 className="w-4 h-4" /> Concluída
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4" /> Concluída
+                      </span>
+                      {onTriggerConfetti && (
+                        <button
+                          onClick={onTriggerConfetti}
+                          className="px-2 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Soltar confetes para comemorar esta conquista!"
+                        >
+                          🎉
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     mission.gameTarget !== 'all' && (
                       <button

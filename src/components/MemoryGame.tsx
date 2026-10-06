@@ -248,13 +248,13 @@ export default function MemoryGame({ onWin, onUseHint }: MemoryGameProps) {
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Controles de Modo e Nível */}
-      <div className="w-full mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Seletor de Modo */}
+      {/* Controles de Modo e Dificuldade */}
+      <div className="w-full mb-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Seletor de Modo Pedagógico */}
         <div className="inline-flex p-1 bg-slate-200/80 rounded-xl shadow-inner">
           <button
             onClick={() => setMode('matematica')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               mode === 'matematica'
                 ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
@@ -265,7 +265,7 @@ export default function MemoryGame({ onWin, onUseHint }: MemoryGameProps) {
           </button>
           <button
             onClick={() => setMode('portugues')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               mode === 'portugues'
                 ? 'bg-white text-emerald-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
@@ -276,7 +276,7 @@ export default function MemoryGame({ onWin, onUseHint }: MemoryGameProps) {
           </button>
           <button
             onClick={() => setMode('misto')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               mode === 'misto'
                 ? 'bg-white text-purple-700 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
@@ -287,26 +287,45 @@ export default function MemoryGame({ onWin, onUseHint }: MemoryGameProps) {
           </button>
         </div>
 
-        {/* Níveis de Dificuldade */}
+        {/* SELETOR DE DIFICULDADE (FÁCIL, MÉDIO, DIFÍCIL) */}
         <div className="flex items-center gap-1.5 bg-slate-200/80 p-1 rounded-xl shadow-inner">
-          {DIFFICULTY_LEVELS.map(lvl => (
-            <button
-              key={lvl.level}
-              onClick={() => setLevel(lvl.level)}
-              className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                level === lvl.level
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title={lvl.description}
-            >
-              <span>{lvl.badge.split(' ')[0]}</span>
-              <span>{lvl.name}</span>
-              <span className="text-[10px] text-slate-400 font-semibold hidden sm:inline">
-                ({lvl.pairs}p/{lvl.timeLimit}s)
-              </span>
-            </button>
-          ))}
+          <span className="text-[10px] font-extrabold uppercase text-slate-500 px-2 hidden sm:inline">
+            Dificuldade:
+          </span>
+          {DIFFICULTY_LEVELS.map(lvl => {
+            const isSelected = level === lvl.level;
+            return (
+              <button
+                key={lvl.level}
+                onClick={() => setLevel(lvl.level)}
+                className={`flex-1 md:flex-none px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  isSelected
+                    ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-300'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title={lvl.description}
+              >
+                <span>{lvl.badge.split(' ')[0]}</span>
+                <span className="font-extrabold">{lvl.name}</span>
+                <span className="text-[10px] text-slate-500 font-semibold">
+                  ({lvl.pairs}p • {lvl.timeLimit}s)
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Banner Informativo da Configuração de Dificuldade Selecionada */}
+      <div className="w-full mb-3 px-3.5 py-2 bg-gradient-to-r from-blue-50/90 to-emerald-50/90 border border-slate-200 rounded-xl flex items-center justify-between text-xs text-slate-700 shadow-xs">
+        <div className="flex items-center gap-2">
+          <span className="text-base">{currentLevelConfig.badge.split(' ')[0]}</span>
+          <span>
+            <strong>Dificuldade: {currentLevelConfig.name}</strong> • Grade configurada com <strong>{currentLevelConfig.pairs * 2} cartas ({currentLevelConfig.pairs} pares)</strong>
+          </span>
+        </div>
+        <div className="flex items-center gap-2 font-bold text-slate-600 text-[11px]">
+          <span>⏱️ Tempo Limite: <strong className="text-slate-900">{currentLevelConfig.timeLimit}s</strong></span>
         </div>
       </div>
 
@@ -618,7 +637,7 @@ export default function MemoryGame({ onWin, onUseHint }: MemoryGameProps) {
                   onClick={() => setLevel(level + 1)}
                   className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Avançar Nível {level + 1}</span>
+                  <span>Avançar para o {level === 1 ? 'Médio (6 pares)' : 'Difícil (8 pares)'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
