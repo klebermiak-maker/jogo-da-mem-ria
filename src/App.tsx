@@ -7,7 +7,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Trophy, Volume2, VolumeX, BookOpen, Download, 
   Copy, Check, GraduationCap, Calculator, 
-  BookMarked, Target, Search, Zap, Medal, ArrowRight, Sparkles
+  BookMarked, Target, Search, Zap, Medal, ArrowRight, Sparkles,
+  Pencil, RotateCcw
 } from 'lucide-react';
 import MemoryGame from './components/MemoryGame';
 import GrammarDetectiveGame from './components/GrammarDetectiveGame';
@@ -27,6 +28,7 @@ const STORAGE_KEYS = {
   LEADERBOARD: 'bncc_leaderboard_data',
   MISSIONS: 'bncc_missions_data',
   BADGES: 'bncc_badges_data',
+  GAME_TITLE: 'bncc_game_custom_title',
 };
 
 export default function App() {
@@ -108,6 +110,27 @@ export default function App() {
     xpReward: number;
     bnccCode: string;
   } | null>(null);
+
+  // Nome do Jogo com persistência no localStorage
+  const [gameTitle, setGameTitle] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.GAME_TITLE);
+      return saved ? JSON.parse(saved) : 'Arena dos Saberes BNCC';
+    } catch {
+      return 'Arena dos Saberes BNCC';
+    }
+  });
+
+  const [showEditNameModal, setShowEditNameModal] = useState<boolean>(false);
+  const [inputTitle, setInputTitle] = useState<string>('');
+
+  // Sincronizar título no documento e no localStorage
+  useEffect(() => {
+    document.title = `${gameTitle} • 5º Ano Fundamental`;
+    try {
+      localStorage.setItem(STORAGE_KEYS.GAME_TITLE, JSON.stringify(gameTitle));
+    } catch {}
+  }, [gameTitle]);
 
   // Modais
   const [showPedagogicalGuide, setShowPedagogicalGuide] = useState<boolean>(false);
@@ -359,9 +382,21 @@ export default function App() {
                 <span className="text-xs text-slate-400 hidden sm:inline">•</span>
                 <span className="text-xs text-slate-500 hidden sm:inline">Rank & Missões de Aprendizagem</span>
               </div>
-              <h1 className="text-lg font-black text-slate-900 leading-tight">
-                Jornada Gamificada BNCC
-              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <h1 className="text-lg font-black text-slate-900 leading-tight">
+                  {gameTitle}
+                </h1>
+                <button
+                  onClick={() => {
+                    setInputTitle(gameTitle);
+                    setShowEditNameModal(true);
+                  }}
+                  className="p-1 rounded-lg text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 transition-colors cursor-pointer group"
+                  title="Trocar nome do jogo"
+                >
+                  <Pencil className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -636,7 +671,127 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL EXPORTAR SINGLE FILE */}
+      {/* MODAL PARA TROCAR NOME DO JOGO */}
+      {showEditNameModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full flex flex-col shadow-2xl border border-slate-100 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <Pencil className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">
+                    Trocar Nome do Jogo
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Personalize o título da aplicação para sua turma, escola ou evento
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEditNameModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (inputTitle.trim()) {
+                  setGameTitle(inputTitle.trim());
+                  soundManager.playMatch();
+                  setShowEditNameModal(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Título Personalizado:
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={inputTitle}
+                    onChange={(e) => setInputTitle(e.target.value.slice(0, 45))}
+                    placeholder="Ex: Arena dos Saberes 5º Ano"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm font-semibold text-slate-800 bg-white shadow-xs"
+                    autoFocus
+                  />
+                  <span className="absolute right-3 top-3 text-[10px] font-bold text-slate-400">
+                    {inputTitle.length}/45
+                  </span>
+                </div>
+              </div>
+
+              {/* Sugestões Rápidas */}
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 block mb-2">
+                  Sugestões criativas para inspirar:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Arena dos Saberes BNCC',
+                    'Super Desafio da Memória BNCC',
+                    'Liga dos Campeões da BNCC',
+                    'Expedição do Conhecimento 5º Ano',
+                    'Super Cérebros: Matemática & Português',
+                    'Gincana BNCC - 5º Ano',
+                    'Olimpíada do Conhecimento 5º Ano'
+                  ].map((preset) => (
+                    <button
+                      type="button"
+                      key={preset}
+                      onClick={() => setInputTitle(preset)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all text-left cursor-pointer ${
+                        inputTitle === preset
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold shadow-xs'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 font-medium'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInputTitle('Arena dos Saberes BNCC');
+                  }}
+                  className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Padrão
+                </button>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditNameModal(false)}
+                    className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!inputTitle.trim()}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" />
+                    Salvar Nome
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {showHtmlExportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-3xl max-w-xl w-full flex flex-col shadow-2xl border border-slate-100 p-6">
